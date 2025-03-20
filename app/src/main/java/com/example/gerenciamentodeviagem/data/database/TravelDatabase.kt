@@ -1,10 +1,10 @@
-package com.example.gerenciamentodeviagem.data.database
+package com.example.travelapp.data.database
 
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.example.gerenciamentodeviagem.data.model.Travel
+import com.example.travelapp.data.model.Travel
 
 @Database(entities = [Travel::class], version = 1, exportSchema = false)
 abstract class TravelDatabase : RoomDatabase() {
