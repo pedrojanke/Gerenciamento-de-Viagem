@@ -26,6 +26,11 @@ fun RegisterScreen(navController: NavController, viewModel: UserViewModel) {
     var showAlert by remember { mutableStateOf(false) }
     var alertMessage by remember { mutableStateOf("") }
 
+    fun isEmailValid(email: String): Boolean {
+        val emailPattern = "[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}"
+        return email.matches(Regex(emailPattern))
+    }
+
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -88,6 +93,9 @@ fun RegisterScreen(navController: NavController, viewModel: UserViewModel) {
         Button(onClick = {
             if (username.isEmpty() || name.isEmpty() || email.isEmpty() || password.isEmpty()) {
                 alertMessage = "Preencha todos os campos."
+                showAlert = true
+            } else if (!isEmailValid(email)) {
+                alertMessage = "E-mail inválido."
                 showAlert = true
             } else if (password != confirmPassword) {
                 alertMessage = "As senhas não coincidem."
