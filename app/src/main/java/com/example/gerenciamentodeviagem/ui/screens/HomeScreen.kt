@@ -30,7 +30,7 @@ fun HomeScreen(navController: NavController, viewModel: TravelViewModel) {
         bottomBar = {
             BottomNavigation {
                 BottomNavigationItem(selected = true, onClick = {}, icon = { Icon(Icons.Default.Home, contentDescription = "Home") })
-                BottomNavigationItem(selected = false, onClick = { navController.navigate("new_travel") }, icon = { Icon(Icons.Default.Add, contentDescription = "New Travel") })
+                BottomNavigationItem(selected = false, onClick = { navController.navigate("new_travel") }, icon = { Icon(Icons.Default.Add, contentDescription = "Nova Viagem") })
                 BottomNavigationItem(selected = false, onClick = {}, icon = { Icon(Icons.Default.Info, contentDescription = "About") })
             }
         }

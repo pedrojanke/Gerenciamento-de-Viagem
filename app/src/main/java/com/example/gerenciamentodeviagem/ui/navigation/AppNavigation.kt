@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.gerenciamentodeviagem.ui.screens.HomeScreen
 import com.example.gerenciamentodeviagem.ui.screens.LoginScreen
+import com.example.gerenciamentodeviagem.ui.screens.NewTravelScreen
 import com.example.gerenciamentodeviagem.ui.screens.RegisterScreen
 import com.example.gerenciamentodeviagem.viewmodel.UserViewModel
 import com.example.gerenciamentodeviagem.viewmodel.TravelViewModel
@@ -19,5 +20,6 @@ fun AppNavigation(navController: NavHostController,
         composable("login") { LoginScreen(navController, userViewModel) }
         composable("register") { RegisterScreen(navController, userViewModel) }
         composable("home") { HomeScreen(navController, travelViewModel) }
+        composable("new_travel") { NewTravelScreen(navController, travelViewModel) }
     }
 }
