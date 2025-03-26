@@ -10,6 +10,7 @@ import com.example.gerenciamentodeviagem.data.repository.UserRepository
 import com.example.gerenciamentodeviagem.ui.navigation.AppNavigation
 import com.example.gerenciamentodeviagem.ui.theme.TravelManagerTheme
 import com.example.gerenciamentodeviagem.viewmodel.UserViewModel
+import com.example.gerenciamentodeviagem.viewmodel.TravelViewModel
 import com.example.gerenciamentodeviagem.viewmodel.ViewModelFactory
 
 class MainActivity : ComponentActivity() {
@@ -19,11 +20,12 @@ class MainActivity : ComponentActivity() {
         val db = AppDatabase.getDatabase(this)
         val userRepository = UserRepository(db.userDao())
         val userViewModel = ViewModelProvider(this, ViewModelFactory(userRepository)).get(UserViewModel::class.java)
+        val travelViewModel = ViewModelProvider(this).get(TravelViewModel::class.java)
 
         setContent {
             TravelManagerTheme {
                 val navController = rememberNavController()
-                AppNavigation(navController, userViewModel)
+                AppNavigation(navController, userViewModel, travelViewModel)
             }
         }
     }

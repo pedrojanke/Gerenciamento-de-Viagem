@@ -54,7 +54,9 @@ fun LoginScreen(navController: NavController, viewModel: UserViewModel) {
             viewModel.loginUser(username, password) { user ->
                 if (user != null) {
                     Toast.makeText(context, "Login bem-sucedido!", Toast.LENGTH_SHORT).show()
-                    navController.navigate("home")
+                    navController.navigate("home") {
+                        popUpTo("login") { inclusive = true }
+                    }
                 } else {
                     showAlert = true
                 }
@@ -62,6 +64,7 @@ fun LoginScreen(navController: NavController, viewModel: UserViewModel) {
         }) {
             Text("Entrar")
         }
+
 
         Spacer(modifier = Modifier.height(8.dp))
 
