@@ -33,10 +33,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.gerenciamentodeviagem.data.models.Travel
@@ -148,28 +153,34 @@ fun NewTravelScreen(navController: NavController, viewModel: TravelViewModel) {
             )
 
             // Orçamento
+            var budget by remember { mutableStateOf("") }
+
             CurrencyTextField(
                 label = "Orçamento",
                 value = budget,
-                onValueChange = { budget = it }
+                onValueChange = { newValue ->
+                    budget = newValue
+                }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Botão Salvar
             Button(
                 onClick = {
                     if (destination.isNotEmpty() && startDate.isNotEmpty() && budget.isNotEmpty()) {
                         val start = formatter.parse(startDate)
                         val end = if (endDate.isNotEmpty()) formatter.parse(endDate) else null
+                        val budgetInReais = budget.toDouble() / 100
+
                         val newTravel = Travel(
                             id = 0,
                             destination = destination,
                             type = if (travelType == "TRABALHO") TravelType.BUSINESS else TravelType.LEISURE,
                             startDate = start,
                             endDate = end,
-                            budget = budget.replace("[^\\d,]".toRegex(), "").replace(",", ".").toDouble()
+                            budget = budgetInReais
                         )
+
                         viewModel.addTravel(newTravel)
                         navController.navigate("home")
                     }
@@ -178,10 +189,10 @@ fun NewTravelScreen(navController: NavController, viewModel: TravelViewModel) {
             ) {
                 Text("Salvar")
             }
+
         }
     }
 }
-
 
 // Componente para seleção do tipo de viagem
 @Composable
@@ -220,26 +231,45 @@ fun loadBitmapFromAssets(context: Context, filePath: String) =
 // Campo de texto para orçamento
 @Composable
 fun CurrencyTextField(label: String, value: String, onValueChange: (String) -> Unit) {
-    var rawValue by remember { mutableStateOf(0L) }
     val numberFormat = NumberFormat.getCurrencyInstance(Locale("pt", "BR"))
+    var textValue by remember { mutableStateOf(value) }
+    var rawValue by remember { mutableStateOf(0L) }
+    val focusRequester = remember { FocusRequester() }
 
     OutlinedTextField(
-        value = numberFormat.format(rawValue / 100.0),
+        value = textValue,
         onValueChange = { newValue ->
-            val cleanString = newValue.replace("[^\\d]".toRegex(), "")
-            if (cleanString.isNotEmpty()) {
-                rawValue = cleanString.toLong()
-                onValueChange(cleanString)
-            }
+            val onlyDigits = newValue.replace("[^\\d]".toRegex(), "")
+
+            rawValue = if (onlyDigits.isNotEmpty()) onlyDigits.toLong() else 0L
+
+            val formattedValue = numberFormat.format(rawValue / 100.0)
+
+            textValue = formattedValue
+            onValueChange(rawValue.toString())
         },
         label = { Text(label) },
         keyboardOptions = KeyboardOptions.Default.copy(
-            imeAction = ImeAction.Done,
-            keyboardType = KeyboardType.Number
+            keyboardType = KeyboardType.Number,
+            imeAction = ImeAction.Done
         ),
-        keyboardActions = KeyboardActions(
-            onDone = {}
-        ),
-        modifier = Modifier.fillMaxWidth()
+        keyboardActions = KeyboardActions(onDone = {
+            focusRequester.requestFocus()
+        }),
+        modifier = Modifier
+            .fillMaxWidth()
+            .focusRequester(focusRequester),
+        visualTransformation = { annotatedString ->
+            TransformedText(
+                AnnotatedString("R$ ") + annotatedString,
+                OffsetMapping.Identity
+            )
+        }
     )
 }
+
+
+
+
+
+
