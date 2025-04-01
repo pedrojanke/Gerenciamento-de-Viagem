@@ -1,23 +1,21 @@
 package com.example.gerenciamentodeviagem.data.repository
 
+import com.example.gerenciamentodeviagem.data.local.TravelDao
 import com.example.gerenciamentodeviagem.data.models.Travel
 
-class TravelRepository {
-    private val travelList = mutableListOf<Travel>()
-    fun getAllTravels(): List<Travel> = travelList.sortedBy { it.startDate }
+class TravelRepository(private val appDatabase: TravelDao) {
 
-    fun addTravel(travel: Travel) {
-        travelList.add(travel)
+    suspend fun getAllTravels(): List<Travel> = appDatabase.getAllTravels()
+
+    suspend fun addTravel(travel: Travel) {
+        appDatabase.addTravel(travel)
     }
 
-    fun removeTravel(travel: Travel) {
-        travelList.remove(travel)
+    suspend fun removeTravel(travel: Travel) {
+        appDatabase.deleteTravel(travel)
     }
 
-    fun updateTravel(updatedTravel: Travel) {
-        val index = travelList.indexOfFirst { it.id == updatedTravel.id }
-        if (index != -1) {
-            travelList[index] = updatedTravel
-        }
+    suspend fun updateTravel(updatedTravel: Travel) {
+        appDatabase.updateTravel(updatedTravel)
     }
 }

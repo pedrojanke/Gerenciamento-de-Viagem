@@ -16,9 +16,12 @@ class ViewModelFactory(
                 @Suppress("UNCHECKED_CAST")
                 UserViewModel(userRepository) as T
             }
+            modelClass.isAssignableFrom(TravelViewModel::class.java) && travelRepository != null -> {
+                @Suppress("UNCHECKED_CAST")
+                TravelViewModel(travelRepository) as T
+            }
             else -> throw IllegalArgumentException("Unknown ViewModel class")
         }
     }
-
 }
 
