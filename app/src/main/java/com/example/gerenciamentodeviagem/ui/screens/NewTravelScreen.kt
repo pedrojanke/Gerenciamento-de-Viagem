@@ -259,14 +259,26 @@ fun CurrencyTextField(label: String, value: String, onValueChange: (String) -> U
         modifier = Modifier
             .fillMaxWidth()
             .focusRequester(focusRequester),
-        visualTransformation = { annotatedString ->
+        visualTransformation = { text ->
+            val prefix = "R$ "
+            val transformedText = prefix + text.text
+
             TransformedText(
-                AnnotatedString("R$ ") + annotatedString,
-                OffsetMapping.Identity
+                AnnotatedString(transformedText),
+                object : OffsetMapping {
+                    override fun originalToTransformed(offset: Int): Int {
+                        return offset + prefix.length
+                    }
+
+                    override fun transformedToOriginal(offset: Int): Int {
+                        return (offset - prefix.length).coerceAtLeast(0)
+                    }
+                }
             )
         }
     )
 }
+
 
 
 
