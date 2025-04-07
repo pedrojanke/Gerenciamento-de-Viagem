@@ -3,34 +3,16 @@ package com.example.gerenciamentodeviagem.ui.screens
 import android.app.DatePickerDialog
 import android.content.Context
 import android.graphics.BitmapFactory
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.Button
-import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.RadioButton
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -49,8 +31,7 @@ import com.example.gerenciamentodeviagem.data.models.TravelType
 import com.example.gerenciamentodeviagem.viewmodel.TravelViewModel
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
+import java.util.*
 
 @Composable
 fun NewTravelScreen(navController: NavController, viewModel: TravelViewModel) {
@@ -63,6 +44,13 @@ fun NewTravelScreen(navController: NavController, viewModel: TravelViewModel) {
     val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
+
+    // Recupera o userId salvo no login
+    val sharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+    val userId = sharedPreferences.getInt("user_id", -1)
+
+    // Log de teste para verificar se o ID está sendo recuperado corretamente
+    Log.i("NewTravelScreen", "🧪 ID do usuário logado: $userId")
 
     fun showDatePicker(onDateSelected: (String) -> Unit) {
         DatePickerDialog(
@@ -85,7 +73,6 @@ fun NewTravelScreen(navController: NavController, viewModel: TravelViewModel) {
             .padding(padding)
             .padding(16.dp)) {
 
-            // Destino
             OutlinedTextField(
                 value = destination,
                 onValueChange = { destination = it },
@@ -95,7 +82,6 @@ fun NewTravelScreen(navController: NavController, viewModel: TravelViewModel) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Tipo de viagem
             Text("Tipo de Viagem", style = MaterialTheme.typography.body1)
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -116,7 +102,6 @@ fun NewTravelScreen(navController: NavController, viewModel: TravelViewModel) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Data início
             OutlinedTextField(
                 value = startDate,
                 onValueChange = {},
@@ -134,7 +119,6 @@ fun NewTravelScreen(navController: NavController, viewModel: TravelViewModel) {
                 readOnly = true
             )
 
-            // Data fim
             OutlinedTextField(
                 value = endDate,
                 onValueChange = {},
@@ -152,22 +136,17 @@ fun NewTravelScreen(navController: NavController, viewModel: TravelViewModel) {
                 readOnly = true
             )
 
-            // Orçamento
-            var budget by remember { mutableStateOf("") }
-
             CurrencyTextField(
                 label = "Orçamento",
                 value = budget,
-                onValueChange = { newValue ->
-                    budget = newValue
-                }
+                onValueChange = { newValue -> budget = newValue }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
                 onClick = {
-                    if (destination.isNotEmpty() && startDate.isNotEmpty() && budget.isNotEmpty()) {
+                    if (destination.isNotEmpty() && startDate.isNotEmpty() && budget.isNotEmpty() && userId != -1) {
                         val start = formatter.parse(startDate)
                         val end = if (endDate.isNotEmpty()) formatter.parse(endDate) else null
                         val budgetInReais = budget.toDouble() / 100
@@ -178,11 +157,14 @@ fun NewTravelScreen(navController: NavController, viewModel: TravelViewModel) {
                             type = if (travelType == "TRABALHO") TravelType.BUSINESS else TravelType.LEISURE,
                             startDate = start,
                             endDate = end,
-                            budget = budgetInReais
+                            budget = budgetInReais,
+                            userId = userId
                         )
 
                         viewModel.addTravel(newTravel)
                         navController.navigate("home")
+                    } else {
+                        Log.i("NewTravelScreen", "⚠️ Campos obrigatórios não preenchidos ou userId inválido!")
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
@@ -194,7 +176,6 @@ fun NewTravelScreen(navController: NavController, viewModel: TravelViewModel) {
     }
 }
 
-// Componente para seleção do tipo de viagem
 @Composable
 fun TravelTypeOption(imageFileName: String, selected: Boolean, onSelect: () -> Unit) {
     val context = LocalContext.current
@@ -222,13 +203,11 @@ fun TravelTypeOption(imageFileName: String, selected: Boolean, onSelect: () -> U
     }
 }
 
-// Função para carregar imagens da pasta assets
 fun loadBitmapFromAssets(context: Context, filePath: String) =
     runCatching {
         context.assets.open(filePath).use { BitmapFactory.decodeStream(it) }
     }.getOrNull()
 
-// Campo de texto para orçamento
 @Composable
 fun CurrencyTextField(label: String, value: String, onValueChange: (String) -> Unit) {
     val numberFormat = NumberFormat.getCurrencyInstance(Locale("pt", "BR"))
@@ -240,11 +219,8 @@ fun CurrencyTextField(label: String, value: String, onValueChange: (String) -> U
         value = textValue,
         onValueChange = { newValue ->
             val onlyDigits = newValue.replace("[^\\d]".toRegex(), "")
-
             rawValue = if (onlyDigits.isNotEmpty()) onlyDigits.toLong() else 0L
-
             val formattedValue = numberFormat.format(rawValue / 100.0)
-
             textValue = formattedValue
             onValueChange(rawValue.toString())
         },
@@ -262,26 +238,13 @@ fun CurrencyTextField(label: String, value: String, onValueChange: (String) -> U
         visualTransformation = { text ->
             val prefix = "R$ "
             val transformedText = prefix + text.text
-
             TransformedText(
                 AnnotatedString(transformedText),
                 object : OffsetMapping {
-                    override fun originalToTransformed(offset: Int): Int {
-                        return offset + prefix.length
-                    }
-
-                    override fun transformedToOriginal(offset: Int): Int {
-                        return (offset - prefix.length).coerceAtLeast(0)
-                    }
+                    override fun originalToTransformed(offset: Int) = offset + prefix.length
+                    override fun transformedToOriginal(offset: Int) = (offset - prefix.length).coerceAtLeast(0)
                 }
             )
         }
     )
 }
-
-
-
-
-
-
-

@@ -7,6 +7,7 @@ import java.util.Date
 @Entity(tableName = "travels")
 data class Travel(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val userId: Int,
     val destination: String,
     val type: TravelType,
     val startDate: Date,

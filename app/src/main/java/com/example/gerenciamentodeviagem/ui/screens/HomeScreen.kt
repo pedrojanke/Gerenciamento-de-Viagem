@@ -19,12 +19,16 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.gerenciamentodeviagem.data.models.Travel
+import com.example.gerenciamentodeviagem.data.utils.PreferencesManager
 import com.example.gerenciamentodeviagem.viewmodel.TravelViewModel
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
@@ -32,20 +36,43 @@ import java.util.Locale
 
 @Composable
 fun HomeScreen(navController: NavController, viewModel: TravelViewModel) {
+    val context = LocalContext.current
+    val userId = remember { PreferencesManager.getUserId(context) }
+
+    LaunchedEffect(Unit) {
+        if (userId != -1) {
+            viewModel.loadTravels(userId)
+        }
+    }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Travel") }) },
+        topBar = {
+            TopAppBar(title = { Text("Travel") })
+        },
         bottomBar = {
             BottomNavigation {
-                BottomNavigationItem(selected = true, onClick = {}, icon = { Icon(Icons.Default.Home, contentDescription = "Home") })
-                BottomNavigationItem(selected = false, onClick = { navController.navigate("new_travel") }, icon = { Icon(Icons.Default.Add, contentDescription = "Nova Viagem") })
-                BottomNavigationItem(selected = false, onClick = {}, icon = { Icon(Icons.Default.Info, contentDescription = "About") })
+                BottomNavigationItem(
+                    selected = true,
+                    onClick = {},
+                    icon = { Icon(Icons.Default.Home, contentDescription = "Home") }
+                )
+                BottomNavigationItem(
+                    selected = false,
+                    onClick = { navController.navigate("new_travel") },
+                    icon = { Icon(Icons.Default.Add, contentDescription = "Nova Viagem") }
+                )
+                BottomNavigationItem(
+                    selected = false,
+                    onClick = {},
+                    icon = { Icon(Icons.Default.Info, contentDescription = "About") }
+                )
             }
         }
     ) { padding ->
         TravelList(viewModel, navController, Modifier.padding(padding))
     }
 }
+
 
 
 @Composable

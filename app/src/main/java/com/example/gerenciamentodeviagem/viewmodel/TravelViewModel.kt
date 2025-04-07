@@ -17,15 +17,14 @@ class TravelViewModel(private val travelRepository: TravelRepository) : ViewMode
     var errorMessage = mutableStateOf<String?>(null)
 
     init {
-        loadTravels()
     }
 
-    private fun loadTravels() {
+    fun loadTravels(userId: Int) {
         viewModelScope.launch {
             try {
                 isLoading.value = true
                 travels.clear()
-                travels.addAll(travelRepository.getAllTravels())
+                travels.addAll(travelRepository.getTravelsByUserId(userId))
             } catch (e: Exception) {
                 errorMessage.value = "Failed to load travels: ${e.localizedMessage}"
             } finally {

@@ -8,7 +8,7 @@ import androidx.room.TypeConverters
 import com.example.gerenciamentodeviagem.data.models.Travel
 import com.example.gerenciamentodeviagem.data.models.User
 
-@Database(entities = [Travel::class, User::class], version = 1, exportSchema = false)
+@Database(entities = [Travel::class, User::class], version = 2, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun travelDao(): TravelDao
@@ -23,7 +23,7 @@ abstract class AppDatabase : RoomDatabase() {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "travel_databaseV2"
+                    "travel_databaseV4"
                 ).build()
                 INSTANCE = instance
                 instance

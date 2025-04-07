@@ -10,6 +10,9 @@ import com.example.gerenciamentodeviagem.data.models.Travel
 @Dao
 interface TravelDao {
 
+    @Query("SELECT * FROM travels WHERE userId = :userId ORDER BY startDate")
+    suspend fun getTravelsByUserId(userId: Int): List<Travel>
+
     @Query("SELECT * FROM travels ORDER BY startDate")
     fun getAllTravels(): List<Travel>
 

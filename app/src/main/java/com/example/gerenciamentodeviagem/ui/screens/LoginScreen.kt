@@ -53,6 +53,12 @@ fun LoginScreen(navController: NavController, viewModel: UserViewModel) {
         Button(onClick = {
             viewModel.loginUser(username, password) { user ->
                 if (user != null) {
+                    val sharedPref = context.getSharedPreferences("user_prefs", android.content.Context.MODE_PRIVATE)
+                    with(sharedPref.edit()) {
+                        putInt("user_id", user.id)
+                        apply()
+                    }
+
                     Toast.makeText(context, "Login bem-sucedido!", Toast.LENGTH_SHORT).show()
                     navController.navigate("home") {
                         popUpTo("login") { inclusive = true }
