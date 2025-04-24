@@ -34,25 +34,20 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
-fun NewTravelScreen(navController: NavController, viewModel: TravelViewModel) {
-    var destination by remember { mutableStateOf("") }
-    var travelType by remember { mutableStateOf("TRABALHO") }
-    var startDate by remember { mutableStateOf("") }
-    var endDate by remember { mutableStateOf("") }
-    var budget by remember { mutableStateOf("") }
+fun EditTravelScreen(navController: NavController, viewModel: TravelViewModel, travelId: String) {
+    val travel = viewModel.getTravelById(travelId)
+
+    var destination by remember { mutableStateOf(travel?.destination ?: "") }
+    var startDate by remember { mutableStateOf(SimpleDateFormat("dd/MM/yyyy").format(travel?.startDate)) }
+    var endDate by remember { mutableStateOf(SimpleDateFormat("dd/MM/yyyy").format(travel?.endDate)) }
+    var budget by remember { mutableStateOf(travel?.budget?.toString() ?: "0.00") }
 
     val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
 
-    // Recupera o userId salvo no login
-    val sharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-    val userId = sharedPreferences.getInt("user_id", -1)
-
-    Log.i("NewTravelScreen", "🧪 ID do usuário logado: $userId")
-
     fun showDatePicker(onDateSelected: (String) -> Unit) {
-        DatePickerDialog(
+        val datePickerDialog = DatePickerDialog(
             context,
             { _, year, month, dayOfMonth ->
                 val selectedDate = Calendar.getInstance()
@@ -62,11 +57,14 @@ fun NewTravelScreen(navController: NavController, viewModel: TravelViewModel) {
             calendar.get(Calendar.YEAR),
             calendar.get(Calendar.MONTH),
             calendar.get(Calendar.DAY_OF_MONTH)
-        ).show()
+        )
+
+        datePickerDialog.show()
     }
 
+
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Nova Viagem") }) },
+        topBar = { TopAppBar(title = { Text("Editar Viagem") }) },
     ) { padding ->
         Column(modifier = Modifier
             .padding(padding)
@@ -78,26 +76,6 @@ fun NewTravelScreen(navController: NavController, viewModel: TravelViewModel) {
                 label = { Text("Destino") },
                 modifier = Modifier.fillMaxWidth()
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text("Tipo de Viagem", style = MaterialTheme.typography.body1)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                TravelTypeOption(
-                    imageFileName = "trabalho.png",
-                    selected = travelType == "TRABALHO",
-                    onSelect = { travelType = "TRABALHO" }
-                )
-
-                TravelTypeOption(
-                    imageFileName = "lazer.png",
-                    selected = travelType == "LAZER",
-                    onSelect = { travelType = "LAZER" }
-                )
-            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -145,105 +123,31 @@ fun NewTravelScreen(navController: NavController, viewModel: TravelViewModel) {
 
             Button(
                 onClick = {
-                    if (destination.isNotEmpty() && startDate.isNotEmpty() && budget.isNotEmpty() && userId != -1) {
+                    if (destination.isNotEmpty() && startDate.isNotEmpty() && budget.isNotEmpty()) {
                         val start = formatter.parse(startDate)
                         val end = if (endDate.isNotEmpty()) formatter.parse(endDate) else null
                         val budgetInReais = budget.toDouble() / 100
 
-                        val newTravel = Travel(
-                            id = 0,
+                        val updatedTravel = Travel(
+                            id = travel?.id ?: 0,
                             destination = destination,
-                            type = if (travelType == "TRABALHO") TravelType.BUSINESS else TravelType.LEISURE,
+                            type = travel?.type ?: TravelType.BUSINESS,
                             startDate = start,
                             endDate = end,
                             budget = budgetInReais,
-                            userId = userId
+                            userId = travel?.userId ?: 0
                         )
 
-                        viewModel.addTravel(newTravel)
+                        viewModel.updateTravel(updatedTravel)
                         navController.navigate("home")
                     } else {
-                        Log.i("NewTravelScreen", "⚠️ Campos obrigatórios não preenchidos ou userId inválido!")
+                        Log.i("EditTravelScreen", "⚠️ Campos obrigatórios não preenchidos!")
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Salvar")
+                Text("Salvar Alterações")
             }
-
         }
     }
-}
-
-@Composable
-fun TravelTypeOption(imageFileName: String, selected: Boolean, onSelect: () -> Unit) {
-    val context = LocalContext.current
-    val imageBitmap = remember(imageFileName) { loadBitmapFromAssets(context, "images/$imageFileName") }
-
-    Column(
-        modifier = Modifier
-            .clickable { onSelect() }
-            .padding(8.dp)
-            .size(40.dp)
-    ) {
-        imageBitmap?.let {
-            Image(bitmap = it.asImageBitmap(), contentDescription = null, modifier = Modifier.fillMaxSize())
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        RadioButton(
-            selected = selected,
-            onClick = onSelect,
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(top = 8.dp)
-        )
-    }
-}
-
-fun loadBitmapFromAssets(context: Context, filePath: String) =
-    runCatching {
-        context.assets.open(filePath).use { BitmapFactory.decodeStream(it) }
-    }.getOrNull()
-
-@Composable
-fun CurrencyTextField(label: String, value: String, onValueChange: (String) -> Unit) {
-    val numberFormat = NumberFormat.getCurrencyInstance(Locale("pt", "BR"))
-    var textValue by remember { mutableStateOf(value) }
-    var rawValue by remember { mutableStateOf(0L) }
-    val focusRequester = remember { FocusRequester() }
-
-    OutlinedTextField(
-        value = textValue,
-        onValueChange = { newValue ->
-            val onlyDigits = newValue.replace("[^\\d]".toRegex(), "")
-            rawValue = if (onlyDigits.isNotEmpty()) onlyDigits.toLong() else 0L
-            val formattedValue = numberFormat.format(rawValue / 100.0)
-            textValue = formattedValue
-            onValueChange(rawValue.toString())
-        },
-        label = { Text(label) },
-        keyboardOptions = KeyboardOptions.Default.copy(
-            keyboardType = KeyboardType.Number,
-            imeAction = ImeAction.Done
-        ),
-        keyboardActions = KeyboardActions(onDone = {
-            focusRequester.requestFocus()
-        }),
-        modifier = Modifier
-            .fillMaxWidth()
-            .focusRequester(focusRequester),
-        visualTransformation = { text ->
-            val prefix = "R$ "
-            val transformedText = prefix + text.text
-            TransformedText(
-                AnnotatedString(transformedText),
-                object : OffsetMapping {
-                    override fun originalToTransformed(offset: Int) = offset + prefix.length
-                    override fun transformedToOriginal(offset: Int) = (offset - prefix.length).coerceAtLeast(0)
-                }
-            )
-        }
-    )
 }

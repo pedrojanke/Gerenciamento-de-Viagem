@@ -33,6 +33,8 @@ import com.example.gerenciamentodeviagem.viewmodel.TravelViewModel
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Locale
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 
 @Composable
 fun HomeScreen(navController: NavController, viewModel: TravelViewModel) {
@@ -79,16 +81,22 @@ fun HomeScreen(navController: NavController, viewModel: TravelViewModel) {
 fun TravelList(viewModel: TravelViewModel, navController: NavController, modifier: Modifier) {
     LazyColumn(modifier = modifier.fillMaxSize()) {
         items(viewModel.travels) { travel ->
-            TravelItem(travel, onClick = {
-                // Navegar para editar
-            })
+            TravelItem(
+                travel = travel,
+                onClick = {
+                },
+                onLongClick = {
+                    // Navegar para a tela de edição da viagem
+                    navController.navigate("edit_travel/${travel.id}")
+                }
+            )
         }
     }
 }
 
 
 @Composable
-fun TravelItem(travel: Travel, onClick: () -> Unit) {
+fun TravelItem(travel: Travel, onClick: () -> Unit, onLongClick: () -> Unit) {
     val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     val currencyFormat = NumberFormat.getCurrencyInstance(Locale("pt", "BR")).apply {
         minimumFractionDigits = 2
@@ -99,7 +107,16 @@ fun TravelItem(travel: Travel, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
-            .clickable(onClick = onClick)
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        onClick()
+                    },
+                    onLongPress = {
+                        onLongClick()
+                    }
+                )
+            }
     ) {
         Column(Modifier.padding(16.dp)) {
             Text(travel.destination, fontWeight = FontWeight.Bold)
@@ -108,5 +125,7 @@ fun TravelItem(travel: Travel, onClick: () -> Unit) {
         }
     }
 }
+
+
 
 

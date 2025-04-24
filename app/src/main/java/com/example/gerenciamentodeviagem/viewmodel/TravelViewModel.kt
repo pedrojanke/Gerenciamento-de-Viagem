@@ -77,4 +77,13 @@ class TravelViewModel(private val travelRepository: TravelRepository) : ViewMode
             }
         }
     }
+
+    fun getTravelById(id: String): Travel? {
+        val travelId = id.toIntOrNull()
+        return if (travelId != null) {
+            travels.find { it.id == travelId }
+        } else {
+            null
+        }
+    }
 }
