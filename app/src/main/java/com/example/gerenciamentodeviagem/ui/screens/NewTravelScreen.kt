@@ -135,10 +135,15 @@ fun NewTravelScreen(navController: NavController, viewModel: TravelViewModel) {
                 readOnly = true
             )
 
-            CurrencyTextField(
-                label = "Orçamento",
+            OutlinedTextField(
                 value = budget,
-                onValueChange = { newValue -> budget = newValue }
+                onValueChange = { budget = it },
+                label = { Text("Orçamento") },
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done
+                ),
+                modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -148,7 +153,7 @@ fun NewTravelScreen(navController: NavController, viewModel: TravelViewModel) {
                     if (destination.isNotEmpty() && startDate.isNotEmpty() && budget.isNotEmpty() && userId != -1) {
                         val start = formatter.parse(startDate)
                         val end = if (endDate.isNotEmpty()) formatter.parse(endDate) else null
-                        val budgetInReais = budget.toDouble() / 100
+                        val budgetInReais = budget.toDoubleOrNull() ?: 0.0
 
                         val newTravel = Travel(
                             id = 0,
@@ -207,43 +212,3 @@ fun loadBitmapFromAssets(context: Context, filePath: String) =
         context.assets.open(filePath).use { BitmapFactory.decodeStream(it) }
     }.getOrNull()
 
-@Composable
-fun CurrencyTextField(label: String, value: String, onValueChange: (String) -> Unit) {
-    val numberFormat = NumberFormat.getCurrencyInstance(Locale("pt", "BR"))
-    var textValue by remember { mutableStateOf(value) }
-    var rawValue by remember { mutableStateOf(0L) }
-    val focusRequester = remember { FocusRequester() }
-
-    OutlinedTextField(
-        value = textValue,
-        onValueChange = { newValue ->
-            val onlyDigits = newValue.replace("[^\\d]".toRegex(), "")
-            rawValue = if (onlyDigits.isNotEmpty()) onlyDigits.toLong() else 0L
-            val formattedValue = numberFormat.format(rawValue / 100.0)
-            textValue = formattedValue
-            onValueChange(rawValue.toString())
-        },
-        label = { Text(label) },
-        keyboardOptions = KeyboardOptions.Default.copy(
-            keyboardType = KeyboardType.Number,
-            imeAction = ImeAction.Done
-        ),
-        keyboardActions = KeyboardActions(onDone = {
-            focusRequester.requestFocus()
-        }),
-        modifier = Modifier
-            .fillMaxWidth()
-            .focusRequester(focusRequester),
-        visualTransformation = { text ->
-            val prefix = "R$ "
-            val transformedText = prefix + text.text
-            TransformedText(
-                AnnotatedString(transformedText),
-                object : OffsetMapping {
-                    override fun originalToTransformed(offset: Int) = offset + prefix.length
-                    override fun transformedToOriginal(offset: Int) = (offset - prefix.length).coerceAtLeast(0)
-                }
-            )
-        }
-    )
-}

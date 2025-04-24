@@ -86,7 +86,6 @@ fun TravelList(viewModel: TravelViewModel, navController: NavController, modifie
                 onClick = {
                 },
                 onLongClick = {
-                    // Navegar para a tela de edição da viagem
                     navController.navigate("edit_travel/${travel.id}")
                 }
             )
@@ -121,10 +120,14 @@ fun TravelItem(travel: Travel, onClick: () -> Unit, onLongClick: () -> Unit) {
         Column(Modifier.padding(16.dp)) {
             Text(travel.destination, fontWeight = FontWeight.Bold)
             Text("${formatter.format(travel.startDate)} - ${travel.endDate?.let { formatter.format(it) } ?: ""}")
-            Text("Orçamento: ${currencyFormat.format(travel.budget)}", color = Color.Gray)
+
+            val budgetInReais = travel.budget
+            Text("Orçamento: ${currencyFormat.format(budgetInReais)}", color = Color.Gray)
         }
     }
 }
+
+
 
 
 

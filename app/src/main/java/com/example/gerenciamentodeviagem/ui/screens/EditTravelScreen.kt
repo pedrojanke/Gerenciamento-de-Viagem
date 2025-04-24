@@ -2,34 +2,24 @@ package com.example.gerenciamentodeviagem.ui.screens
 
 import android.app.DatePickerDialog
 import android.content.Context
-import android.graphics.BitmapFactory
-import android.util.Log
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.OffsetMapping
-import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.gerenciamentodeviagem.data.models.Travel
 import com.example.gerenciamentodeviagem.data.models.TravelType
 import com.example.gerenciamentodeviagem.viewmodel.TravelViewModel
-import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -41,6 +31,7 @@ fun EditTravelScreen(navController: NavController, viewModel: TravelViewModel, t
     var startDate by remember { mutableStateOf(SimpleDateFormat("dd/MM/yyyy").format(travel?.startDate)) }
     var endDate by remember { mutableStateOf(SimpleDateFormat("dd/MM/yyyy").format(travel?.endDate)) }
     var budget by remember { mutableStateOf(travel?.budget?.toString() ?: "0.00") }
+    var travelType by remember { mutableStateOf(if (travel?.type == TravelType.BUSINESS) "TRABALHO" else "LAZER") }
 
     val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     val context = LocalContext.current
@@ -62,7 +53,6 @@ fun EditTravelScreen(navController: NavController, viewModel: TravelViewModel, t
         datePickerDialog.show()
     }
 
-
     Scaffold(
         topBar = { TopAppBar(title = { Text("Editar Viagem") }) },
     ) { padding ->
@@ -76,6 +66,26 @@ fun EditTravelScreen(navController: NavController, viewModel: TravelViewModel, t
                 label = { Text("Destino") },
                 modifier = Modifier.fillMaxWidth()
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text("Tipo de Viagem", style = MaterialTheme.typography.body1)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                TravelTypeOption(
+                    imageFileName = "trabalho.png",
+                    selected = travelType == "TRABALHO",
+                    onSelect = { travelType = "TRABALHO" }
+                )
+
+                TravelTypeOption(
+                    imageFileName = "lazer.png",
+                    selected = travelType == "LAZER",
+                    onSelect = { travelType = "LAZER" }
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -113,10 +123,15 @@ fun EditTravelScreen(navController: NavController, viewModel: TravelViewModel, t
                 readOnly = true
             )
 
-            CurrencyTextField(
-                label = "Orçamento",
+            OutlinedTextField(
                 value = budget,
-                onValueChange = { newValue -> budget = newValue }
+                onValueChange = { budget = it },
+                label = { Text("Orçamento") },
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done
+                ),
+                modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -126,12 +141,12 @@ fun EditTravelScreen(navController: NavController, viewModel: TravelViewModel, t
                     if (destination.isNotEmpty() && startDate.isNotEmpty() && budget.isNotEmpty()) {
                         val start = formatter.parse(startDate)
                         val end = if (endDate.isNotEmpty()) formatter.parse(endDate) else null
-                        val budgetInReais = budget.toDouble() / 100
+                        val budgetInReais = budget.toDoubleOrNull() ?: 0.0
 
                         val updatedTravel = Travel(
                             id = travel?.id ?: 0,
                             destination = destination,
-                            type = travel?.type ?: TravelType.BUSINESS,
+                            type = if (travelType == "TRABALHO") TravelType.BUSINESS else TravelType.LEISURE,
                             startDate = start,
                             endDate = end,
                             budget = budgetInReais,
@@ -140,8 +155,6 @@ fun EditTravelScreen(navController: NavController, viewModel: TravelViewModel, t
 
                         viewModel.updateTravel(updatedTravel)
                         navController.navigate("home")
-                    } else {
-                        Log.i("EditTravelScreen", "⚠️ Campos obrigatórios não preenchidos!")
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
