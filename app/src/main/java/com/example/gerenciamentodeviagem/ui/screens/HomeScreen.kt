@@ -1,28 +1,20 @@
 package com.example.gerenciamentodeviagem.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.BottomNavigation
-import androidx.compose.material.BottomNavigationItem
-import androidx.compose.material.Card
-import androidx.compose.material.Icon
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -32,9 +24,7 @@ import com.example.gerenciamentodeviagem.data.utils.PreferencesManager
 import com.example.gerenciamentodeviagem.viewmodel.TravelViewModel
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
-import java.util.Locale
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.ui.input.pointer.pointerInput
+import java.util.*
 
 @Composable
 fun HomeScreen(navController: NavController, viewModel: TravelViewModel) {
@@ -75,24 +65,49 @@ fun HomeScreen(navController: NavController, viewModel: TravelViewModel) {
     }
 }
 
-
-
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun TravelList(viewModel: TravelViewModel, navController: NavController, modifier: Modifier) {
     LazyColumn(modifier = modifier.fillMaxSize()) {
-        items(viewModel.travels) { travel ->
-            TravelItem(
-                travel = travel,
-                onClick = {
+        items(viewModel.travels, key = { it.id }) { travel ->
+            val dismissState = rememberDismissState(
+                confirmStateChange = {
+                    if (it == DismissValue.DismissedToEnd || it == DismissValue.DismissedToStart) {
+                        viewModel.removeTravel(travel)
+                        true
+                    } else false
+                }
+            )
+
+            SwipeToDismiss(
+                state = dismissState,
+                directions = setOf(DismissDirection.StartToEnd, DismissDirection.EndToStart),
+                background = {
+                    val color = when (dismissState.dismissDirection) {
+                        DismissDirection.StartToEnd,
+                        DismissDirection.EndToStart -> Color.Red
+                        null -> Color.Transparent
+                    }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(8.dp)
+                            .background(color)
+                    )
                 },
-                onLongClick = {
-                    navController.navigate("edit_travel/${travel.id}")
+                dismissContent = {
+                    TravelItem(
+                        travel = travel,
+                        onClick = {},
+                        onLongClick = {
+                            navController.navigate("edit_travel/${travel.id}")
+                        }
+                    )
                 }
             )
         }
     }
 }
-
 
 @Composable
 fun TravelItem(travel: Travel, onClick: () -> Unit, onLongClick: () -> Unit) {
@@ -108,27 +123,15 @@ fun TravelItem(travel: Travel, onClick: () -> Unit, onLongClick: () -> Unit) {
             .padding(8.dp)
             .pointerInput(Unit) {
                 detectTapGestures(
-                    onTap = {
-                        onClick()
-                    },
-                    onLongPress = {
-                        onLongClick()
-                    }
+                    onTap = { onClick() },
+                    onLongPress = { onLongClick() }
                 )
             }
     ) {
         Column(Modifier.padding(16.dp)) {
             Text(travel.destination, fontWeight = FontWeight.Bold)
             Text("${formatter.format(travel.startDate)} - ${travel.endDate?.let { formatter.format(it) } ?: ""}")
-
-            val budgetInReais = travel.budget
-            Text("Orçamento: ${currencyFormat.format(budgetInReais)}", color = Color.Gray)
+            Text("Orçamento: ${currencyFormat.format(travel.budget)}", color = Color.Gray)
         }
     }
 }
-
-
-
-
-
-
