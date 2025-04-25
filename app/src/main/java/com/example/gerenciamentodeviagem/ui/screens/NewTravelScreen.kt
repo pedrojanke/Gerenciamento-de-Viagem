@@ -183,7 +183,7 @@ fun NewTravelScreen(navController: NavController, viewModel: TravelViewModel) {
 @Composable
 fun TravelTypeOption(imageFileName: String, selected: Boolean, onSelect: () -> Unit) {
     val context = LocalContext.current
-    val imageBitmap = remember(imageFileName) { loadBitmapFromAssets(context, "images/$imageFileName") }
+    val imageBitmap = remember(imageFileName) { loadBitmapForNewTravel(context, "images/$imageFileName") }
 
     Column(
         modifier = Modifier
@@ -207,7 +207,7 @@ fun TravelTypeOption(imageFileName: String, selected: Boolean, onSelect: () -> U
     }
 }
 
-fun loadBitmapFromAssets(context: Context, filePath: String) =
+fun loadBitmapForNewTravel(context: Context, filePath: String) =
     runCatching {
         context.assets.open(filePath).use { BitmapFactory.decodeStream(it) }
     }.getOrNull()
