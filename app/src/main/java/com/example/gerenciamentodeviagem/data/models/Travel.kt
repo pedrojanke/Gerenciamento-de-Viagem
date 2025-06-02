@@ -12,7 +12,8 @@ data class Travel(
     val type: TravelType,
     val startDate: Date,
     val endDate: Date?,
-    val budget: Double
+    val budget: Double,
+    var roteiroSalvo: String? = null
 )
 
 enum class TravelType {

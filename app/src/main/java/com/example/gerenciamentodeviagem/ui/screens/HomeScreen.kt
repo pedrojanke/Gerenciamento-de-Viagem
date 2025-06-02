@@ -10,6 +10,8 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.DismissDirection
 import androidx.compose.material.DismissValue
@@ -35,7 +37,12 @@ import androidx.navigation.NavController
 import com.example.gerenciamentodeviagem.data.models.Travel
 import com.example.gerenciamentodeviagem.data.models.TravelType
 import com.example.gerenciamentodeviagem.data.utils.PreferencesManager
+import com.example.gerenciamentodeviagem.data.utils.generateRoteiro
 import com.example.gerenciamentodeviagem.viewmodel.TravelViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
@@ -115,7 +122,8 @@ fun TravelList(viewModel: TravelViewModel, navController: NavController, modifie
                         onClick = {},
                         onLongClick = {
                             navController.navigate("edit_travel/${travel.id}")
-                        }
+                        },
+                        viewModel = viewModel
                     )
                 }
             )
@@ -125,7 +133,12 @@ fun TravelList(viewModel: TravelViewModel, navController: NavController, modifie
 
 @SuppressLint("RememberReturnType")
 @Composable
-fun TravelItem(travel: Travel, onClick: () -> Unit, onLongClick: () -> Unit) {
+fun TravelItem(
+    travel: Travel,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    viewModel: TravelViewModel
+) {
     val context = LocalContext.current
     val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     val currencyFormat = NumberFormat.getCurrencyInstance(Locale("pt", "BR")).apply {
@@ -137,6 +150,10 @@ fun TravelItem(travel: Travel, onClick: () -> Unit, onLongClick: () -> Unit) {
     val imageBitmap = remember(imageFileName) {
         loadBitmapFromAssets(context, "images/$imageFileName")
     }
+
+    var showDialog by remember { mutableStateOf(false) }
+    var roteiro by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier
@@ -158,17 +175,112 @@ fun TravelItem(travel: Travel, onClick: () -> Unit, onLongClick: () -> Unit) {
                 )
             }
 
-            Column {
-                Text(text = travel.destination, style = MaterialTheme.typography.h6, fontWeight = FontWeight.Bold)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = travel.destination,
+                    style = MaterialTheme.typography.h6,
+                    fontWeight = FontWeight.Bold
+                )
                 Text(text = "Início: ${formatter.format(travel.startDate)}")
                 travel.endDate?.let {
                     Text(text = "Fim: ${formatter.format(it)}")
                 }
                 Text(text = "Orçamento: ${currencyFormat.format(travel.budget)}")
             }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Button(onClick = {
+                roteiro = travel.roteiroSalvo
+                if (roteiro == null) {
+                    // Vai gerar roteiro novo, mostra diálogo e loading
+                    isLoading = true
+                } else {
+                    isLoading = false
+                }
+                showDialog = true
+            }) {
+                Text("Roteiro")
+            }
         }
     }
+
+    if (showDialog) {
+        LaunchedEffect(showDialog, travel) {
+            if (showDialog && roteiro == null) {
+                val generatedRoteiro = generateRoteiro(travel)
+                roteiro = generatedRoteiro
+                isLoading = false
+            }
+        }
+
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("Roteiro da Viagem") },
+            text = {
+                if (isLoading) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                } else {
+                    // Container fixo com altura máxima definida
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(400.dp)  // FIXO para limitar o tamanho do diálogo
+                    ) {
+                        // Conteúdo rolável dentro do box fixo
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(8.dp)
+                        ) {
+                            item {
+                                Text(
+                                    text = roteiro ?: "Erro ao gerar o roteiro.",
+                                    style = MaterialTheme.typography.body1
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                if (!isLoading && travel.roteiroSalvo == null) {
+                    Button(onClick = {
+                        travel.roteiroSalvo = roteiro
+                        viewModel.updateTravel(travel)
+                        showDialog = false
+                    }) {
+                        Text("Aceitar")
+                    }
+                }
+            },
+            dismissButton = {
+                Row {
+                    if (!isLoading && travel.roteiroSalvo == null) {
+                        Button(onClick = {
+                            isLoading = true
+                            roteiro = null
+                        }) {
+                            Text("Gerar outro")
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(onClick = { showDialog = false }) {
+                        Text("Fechar")
+                    }
+                }
+            }
+        )
+    }
+
 }
+
 
 fun getImageForTravelType(type: TravelType): String {
     return when (type) {

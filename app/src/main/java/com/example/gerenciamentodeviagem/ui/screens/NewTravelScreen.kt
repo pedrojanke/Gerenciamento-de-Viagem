@@ -7,29 +7,23 @@ import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.OffsetMapping
-import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.gerenciamentodeviagem.data.models.Travel
 import com.example.gerenciamentodeviagem.data.models.TravelType
 import com.example.gerenciamentodeviagem.viewmodel.TravelViewModel
-import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -45,7 +39,6 @@ fun NewTravelScreen(navController: NavController, viewModel: TravelViewModel) {
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
 
-    // Recupera o userId salvo no login
     val sharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
     val userId = sharedPreferences.getInt("user_id", -1)
 
@@ -66,12 +59,22 @@ fun NewTravelScreen(navController: NavController, viewModel: TravelViewModel) {
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Nova Viagem") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Nova Viagem") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Voltar")
+                    }
+                }
+            )
+        }
     ) { padding ->
-        Column(modifier = Modifier
-            .padding(padding)
-            .padding(16.dp)) {
-
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .padding(16.dp)
+        ) {
             OutlinedTextField(
                 value = destination,
                 onValueChange = { destination = it },
@@ -175,7 +178,6 @@ fun NewTravelScreen(navController: NavController, viewModel: TravelViewModel) {
             ) {
                 Text("Salvar")
             }
-
         }
     }
 }
@@ -211,4 +213,3 @@ fun loadBitmapForNewTravel(context: Context, filePath: String) =
     runCatching {
         context.assets.open(filePath).use { BitmapFactory.decodeStream(it) }
     }.getOrNull()
-

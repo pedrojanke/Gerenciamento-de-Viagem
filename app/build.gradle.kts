@@ -52,6 +52,7 @@ android {
 }
 
 dependencies {
+    implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
     val composeBom = platform("androidx.compose:compose-bom:2024.03.00")
     implementation(composeBom)
     implementation("androidx.compose.ui:ui")
@@ -68,4 +69,5 @@ dependencies {
     implementation("androidx.compose.material:material:1.6.0")
     implementation("androidx.compose.material:material-icons-extended:1.4.0")
     implementation("androidx.compose.foundation:foundation:1.4.0")
+
 }
