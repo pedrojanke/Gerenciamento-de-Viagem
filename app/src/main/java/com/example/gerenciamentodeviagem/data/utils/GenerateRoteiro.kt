@@ -7,8 +7,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 
-suspend fun generateRoteiro(travel: Travel): String {
-    val prompt = """
+suspend fun generateRoteiro(travel: Travel, suggestion: String? = null): String {
+    val basePrompt = """
         Crie um roteiro de viagem para o seguinte plano:
         - Destino: ${travel.destination}
         - Data de início: ${SimpleDateFormat("dd/MM/yyyy").format(travel.startDate)}
@@ -19,6 +19,12 @@ suspend fun generateRoteiro(travel: Travel): String {
         O roteiro deve incluir atividades principais por dia, sugestões de locais e respeitar o tipo de viagem.
     """.trimIndent()
 
+    val prompt = if (!suggestion.isNullOrBlank()) {
+        "$basePrompt\n\nConsidere a seguinte sugestão para modificar o roteiro:\n$suggestion"
+    } else {
+        basePrompt
+    }
+
     val generativeModel = GenerativeModel(
         modelName = "gemini-1.5-flash",
         apiKey = ApiKeys.GEMINI_API_KEY
@@ -27,6 +33,7 @@ suspend fun generateRoteiro(travel: Travel): String {
     val response = generativeModel.generateContent(prompt)
     return response.text ?: "Não foi possível gerar o roteiro."
 }
+
 
 object ApiKeys {
     const val GEMINI_API_KEY = "AIzaSyCiOyyzVb8G4BNSKuiXqQ3sLzpyQlUvYPE"

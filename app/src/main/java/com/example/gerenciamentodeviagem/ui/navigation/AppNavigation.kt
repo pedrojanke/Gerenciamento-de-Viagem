@@ -11,6 +11,7 @@ import com.example.gerenciamentodeviagem.ui.screens.HomeScreen
 import com.example.gerenciamentodeviagem.ui.screens.LoginScreen
 import com.example.gerenciamentodeviagem.ui.screens.NewTravelScreen
 import com.example.gerenciamentodeviagem.ui.screens.RegisterScreen
+import com.example.gerenciamentodeviagem.ui.screens.RoteiroScreen
 import com.example.gerenciamentodeviagem.viewmodel.UserViewModel
 import com.example.gerenciamentodeviagem.viewmodel.TravelViewModel
 
@@ -33,5 +34,10 @@ fun AppNavigation(navController: NavHostController,
                 EditTravelScreen(navController = navController, viewModel = travelViewModel, travelId = it)
             }
         }
+        composable("roteiro") { backStackEntry ->
+            val roteiro = backStackEntry.arguments?.getString("roteiro") ?: ""
+            RoteiroScreen(roteiro = roteiro, onBack = { navController.popBackStack() })
+        }
     }
 }
+
